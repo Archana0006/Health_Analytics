@@ -19,12 +19,12 @@ services:
         fromService:
           name: health-analytics-frontend
           type: static
-          property: host
+          property: url
       - key: ML_SERVICE_URL
         fromService:
           name: health-analytics-ml
           type: web
-          property: host
+          property: url
 
   # ML Service (Flask/Python)
   - type: web
@@ -48,7 +48,7 @@ services:
         fromService:
           name: health-analytics-backend
           type: web
-          property: host
+          property: url
     routes:
       - type: rewrite
         source: /*
