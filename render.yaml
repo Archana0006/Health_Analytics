@@ -10,7 +10,7 @@ services:
       - key: NODE_VERSION
         value: 18
       - key: MONGODB_URI
-        sync: false # To be provided in Render dashboard manually
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
@@ -18,7 +18,7 @@ services:
       - key: FRONTEND_URL
         fromService:
           name: health-analytics-frontend
-          type: web
+          type: static
           property: host
       - key: ML_SERVICE_URL
         fromService:
@@ -26,13 +26,13 @@ services:
           type: web
           property: host
 
-  # ML Service (Flask/Docker)
+  # ML Service (Flask/Python)
   - type: web
     name: health-analytics-ml
-    runtime: docker
+    runtime: python
     plan: free
-    dockerfilePath: ml-service/Dockerfile
-    dockerContext: ml-service
+    buildCommand: cd ml-service && pip install -r requirements.txt
+    startCommand: cd ml-service && python app.py
     envVars:
       - key: PORT
         value: 5001
