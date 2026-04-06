@@ -24,7 +24,7 @@ services:
         fromService:
           name: health-analytics-ml
           type: web
-          property: url
+          property: host
 
   # ML Service (Flask/Docker)
   - type: web
