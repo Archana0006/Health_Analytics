@@ -31,7 +31,7 @@ services:
     name: health-analytics-ml
     runtime: docker
     plan: free
-    dockerFilePath: ml-service/Dockerfile
+    dockerfilePath: ml-service/Dockerfile
     dockerContext: ml-service
     envVars:
       - key: PORT
