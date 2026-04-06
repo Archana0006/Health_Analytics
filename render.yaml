@@ -38,7 +38,7 @@ services:
         value: 5001
 
   # Frontend (Static Site)
-  - type: web
+  - type: static
     name: health-analytics-frontend
     runtime: static
     buildCommand: cd frontend && npm install && npm run build

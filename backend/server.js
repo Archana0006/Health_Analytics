@@ -45,7 +45,7 @@ app.use(helmet.contentSecurityPolicy({
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5001", "https://*.onrender.com"],
+        connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5001", "https://*.onrender.com", "https://*.vercel.app"],
     },
 }));
 app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
@@ -78,6 +78,7 @@ const corsOptions = {
         'http://localhost:5173',
         'http://localhost:5176',
         /\.onrender\.com$/,
+        /\.vercel\.app$/,
     ],
     credentials: true,
 };
