@@ -45,7 +45,7 @@ app.use(helmet.contentSecurityPolicy({
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5001"],
+        connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5001", "https://*.onrender.com"],
     },
 }));
 app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
@@ -73,7 +73,12 @@ app.use('/api/', limiter);
 
 // Standard Middleware
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5176',
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:5176',
+        'http://localhost:5173',
+        'http://localhost:5176',
+        /\.onrender\.com$/,
+    ],
     credentials: true,
 };
 app.use(cors(corsOptions));
