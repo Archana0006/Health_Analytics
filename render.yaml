@@ -18,13 +18,13 @@ services:
       - key: FRONTEND_URL
         fromService:
           name: health-analytics-frontend
-          type: web
-          property: host
+          type: static
+          property: url
       - key: ML_SERVICE_URL
         fromService:
           name: health-analytics-ml
           type: web
-          property: host
+          property: url
 
   # ML Service (Flask/Docker)
   - type: web
@@ -37,10 +37,9 @@ services:
       - key: PORT
         value: 5001
 
-  # Frontend (Static Site - Fixed Syntax)
-  - type: web
+  # Frontend (Static Site)
+  - type: static
     name: health-analytics-frontend
-    runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
