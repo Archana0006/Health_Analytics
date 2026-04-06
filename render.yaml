@@ -37,11 +37,12 @@ services:
       - key: PORT
         value: 5001
 
-  # Frontend (Static Site)
-  - type: static
+  # Frontend (Static Site - Fixed Syntax)
+  - type: web
     name: health-analytics-frontend
+    runtime: static
     buildCommand: cd frontend && npm install && npm run build
-    publishPath: frontend/dist
+    staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         fromService:
