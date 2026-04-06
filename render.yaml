@@ -18,8 +18,8 @@ services:
       - key: FRONTEND_URL
         fromService:
           name: health-analytics-frontend
-          type: static
-          property: url
+          type: web
+          property: host
       - key: ML_SERVICE_URL
         fromService:
           name: health-analytics-ml
@@ -38,8 +38,9 @@ services:
         value: 5001
 
   # Frontend (Static Site)
-  - type: static
+  - type: web
     name: health-analytics-frontend
+    runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
