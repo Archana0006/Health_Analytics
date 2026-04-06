@@ -1,0 +1,54 @@
+services:
+  # Backend Service (Node.js)
+  - type: web
+    name: health-analytics-backend
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: MONGODB_URI
+        sync: false # To be provided in Render dashboard manually
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        fromService:
+          name: health-analytics-frontend
+          type: web
+          property: host
+      - key: ML_SERVICE_URL
+        fromService:
+          name: health-analytics-ml
+          type: web
+          property: host
+
+  # ML Service (Flask/Docker)
+  - type: web
+    name: health-analytics-ml
+    runtime: docker
+    plan: free
+    dockerFilePath: ml-service/Dockerfile
+    dockerContext: ml-service
+    envVars:
+      - key: PORT
+        value: 5001
+
+  # Frontend (Static Site)
+  - type: static
+    name: health-analytics-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: health-analytics-backend
+          type: web
+          property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

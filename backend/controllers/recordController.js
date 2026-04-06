@@ -191,22 +191,23 @@ const getMLScore = async (req, res, next) => {
         const vitals = patient.vitals || {};
 
         try {
-            const [diabetesRes, heartRes, hypertensionRes, anemiaRes] = await Promise.all([
-                axios.post('http://localhost:5001/predict/diabetes', {
+              const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:5001';
+              const [diabetesRes, heartRes, hypertensionRes, anemiaRes] = await Promise.all([
+                  axios.post(`${mlServiceUrl}/predict/diabetes`, {
                     bmi: (vitals.weightKg / Math.pow(vitals.heightCm / 100, 2)) || 25,
                     sugar: 100, // Fetch from Labs
                     age: age
                 }),
-                axios.post('http://localhost:5001/predict/heart-disease', {
+                axios.post(`${mlServiceUrl}/predict/heart-disease`, {
                     blood_pressure: vitals.bloodPressure?.systolic || 120,
                     cholesterol: 180, // Fetch from Labs
                     age: age
                 }),
-                axios.post('http://localhost:5001/predict/hypertension', {
+                axios.post(`${mlServiceUrl}/predict/hypertension`, {
                     blood_pressure: vitals.bloodPressure?.systolic || 120,
                     age: age
                 }),
-                axios.post('http://localhost:5001/predict/anemia', {
+                axios.post(`${mlServiceUrl}/predict/anemia`, {
                     hemoglobin: 14, // Fetch from Labs
                     age: age,
                     gender: gender
