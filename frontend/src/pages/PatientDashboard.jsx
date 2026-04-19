@@ -7,6 +7,7 @@ import {
     useNotifications,
     usePatientRecords,
     useReminders,
+    useAddReminder,
     useAppointments,
     useRecentDocuments,
     useMLScore,
@@ -29,6 +30,7 @@ import {
     Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { toast } from 'react-hot-toast';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
@@ -50,10 +52,33 @@ const Dashboard = () => {
     const { data: notifications = [], isLoading: loadingNotifs } = useNotifications();
     const { data: records = [], isLoading: loadingRecords } = usePatientRecords(user?.role === 'patient' ? user.id : null);
     const { data: reminders = [], isLoading: loadingReminders } = useReminders();
+    const addReminderMutation = useAddReminder();
     const { data: upcomingAppointments = [], isLoading: loadingAppts } = useAppointments(user?.role, user?.id);
     const { data: recentDocuments = [], isLoading: loadingDocs } = useRecentDocuments(user?.role === 'patient' ? user.id : null);
     const { data: statsData } = useDashboardStats(user?.role);
     const { data: aiHealthScore, isLoading: loadingScore } = useMLScore(user?.role === 'patient' ? user.id : null);
+
+    const [showReminderInput, setShowReminderInput] = useState(false);
+    const [newReminderTitle, setNewReminderTitle] = useState('');
+
+    const handleAddReminder = async (e) => {
+        e.preventDefault();
+        if (!newReminderTitle.trim()) return;
+        try {
+            await addReminderMutation.mutateAsync({
+                title: newReminderTitle,
+                time: new Date().toLocaleTimeString(),
+                type: 'follow-up'
+            });
+            setNewReminderTitle('');
+            setShowReminderInput(false);
+            toast.success('Reminder added');
+        } catch (err) {
+            const errorMsg = err.response?.data?.errors?.[0] ? Object.values(err.response.data.errors[0])[0] : err.response?.data?.message || 'Failed to add reminder';
+            toast.error(`Error: ${errorMsg}`);
+            console.error(err.response?.data);
+        }
+    };
 
     // Only block on core patient data, not AI score (which depends on external service)
     const loading = loadingRecords || loadingAppts;
@@ -480,16 +505,40 @@ const Dashboard = () => {
 
                 {/* Reminders + Alerts */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div className="card" style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '0.85rem', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ padding: '0.3rem', borderRadius: '6px', background: 'rgba(59,130,246,0.1)', color: '#3B82F6' }}><Clock size={14} /></div>
-                            Reminders
-                        </h3>
-                        {reminders.length === 0 ? (
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>No reminders scheduled.</p>
-                        ) : reminders.slice(0, 2).map((r, i) => (
-                            <div key={i} style={{ padding: '0.45rem 0', borderBottom: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{r.title}</div>
-                        ))}
+                    <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                            <h3 style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div style={{ padding: '0.3rem', borderRadius: '6px', background: 'rgba(59,130,246,0.1)', color: '#3B82F6' }}><Clock size={14} /></div>
+                                Reminders
+                            </h3>
+                            <button onClick={() => setShowReminderInput(!showReminderInput)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex' }}>
+                                <Plus size={16} />
+                            </button>
+                        </div>
+                        {showReminderInput && (
+                            <form onSubmit={handleAddReminder} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                                <input
+                                    autoFocus
+                                    className="input"
+                                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', height: 'auto', flex: 1 }}
+                                    placeholder="e.g. Take Vitamins"
+                                    value={newReminderTitle}
+                                    onChange={e => setNewReminderTitle(e.target.value)}
+                                />
+                                <button type="submit" className="btn btn-primary" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} disabled={addReminderMutation.isPending}>
+                                    Add
+                                </button>
+                            </form>
+                        )}
+                        <div style={{ flex: 1, overflowY: 'auto' }}>
+                            {reminders.length === 0 ? (
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>No reminders scheduled.</p>
+                            ) : reminders.map((r, i) => (
+                                <div key={i} style={{ padding: '0.45rem 0', borderBottom: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                    {r.title}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                     <div className="card" style={{ flex: 1 }}>
                         <h3 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '0.85rem', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

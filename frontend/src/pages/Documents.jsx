@@ -90,9 +90,36 @@ const Documents = () => {
         }
     };
 
-    const handleDownload = (id) => {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        window.open(`${API_URL}/api/documents/${id}/download`, '_blank');
+    const handleDownload = async (id, title) => {
+        try {
+            const { default: apiClient } = await import('../api/apiClient');
+            const response = await apiClient.get(`/documents/${id}/download`, {
+                responseType: 'blob'
+            });
+            
+            // Extract filename from headers if possible
+            let filename = title || 'document_download';
+            const disposition = response.headers['content-disposition'];
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error('Could not securely download the document.');
+        }
     };
 
     const handlePreview = (doc) => {

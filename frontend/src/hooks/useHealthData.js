@@ -207,6 +207,19 @@ export const useReminders = () => {
     });
 };
 
+export const useAddReminder = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (reminderData) => {
+            const { data } = await apiClient.post('/reminders', reminderData);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reminders'] });
+        },
+    });
+};
+
 export const useRecentDocuments = (patientId) => {
     return useQuery({
         queryKey: ['documents', 'recent', patientId],

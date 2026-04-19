@@ -34,9 +34,8 @@ const createRecord = async (req, res, next) => {
 
         // Auth check: Staff can add to any patient, patients can only add to themselves
         if (req.user.role === 'patient') {
-            const user = await User.findById(req.user.id);
-            if (patient.email !== user.email) {
-                console.error(`Create Record Forbidden: User ${user.email} tried to add record for patient ${patient.email}`);
+            if (patient.userId && patient.userId.toString() !== req.user.id.toString()) {
+                console.error(`Create Record Forbidden: User ${req.user.id} tried to add record for patient ${patient._id}`);
                 res.status(403);
                 throw new Error('Not authorized to add records for this patient');
             }
@@ -63,6 +62,7 @@ const createRecord = async (req, res, next) => {
 
         // Update patient's current vitals if provided in the record
         if (bp || sugarLevel || weight || height) {
+            if (!patient.vitals) patient.vitals = {};
             if (bp) patient.vitals.bloodPressure = bp;
             if (sugarLevel) patient.vitals.sugarLevel = sugarLevel;
             if (weight) patient.vitals.weightKg = weight;
@@ -266,8 +266,16 @@ const updateRecord = async (req, res, next) => {
         }
 
         if (req.user.role === 'patient') {
-            res.status(403);
-            throw new Error('Not authorized to edit medical notes');
+            const patientDoc = await require('../models/Patient').findOne({ userId: req.user.id });
+            if (!patientDoc || record.patientId.toString() !== patientDoc._id.toString()) {
+                res.status(403);
+                throw new Error('Not authorized to edit this record');
+            }
+            // Optionally, restrict editing doctor notes:
+            if (record.doctorId) {
+                res.status(403);
+                throw new Error('Not authorized to edit clinical notes added by a doctor');
+            }
         }
 
         const updatedRecord = await MedicalRecord.findByIdAndUpdate(
@@ -294,8 +302,15 @@ const deleteRecord = async (req, res, next) => {
         }
 
         if (req.user.role === 'patient') {
-            res.status(403);
-            throw new Error('Not authorized');
+            const patientDoc = await require('../models/Patient').findOne({ userId: req.user.id });
+            if (!patientDoc || record.patientId.toString() !== patientDoc._id.toString()) {
+                res.status(403);
+                throw new Error('Not authorized to delete this record');
+            }
+            if (record.doctorId) {
+                res.status(403);
+                throw new Error('Not authorized to delete clinical notes added by a doctor');
+            }
         }
 
         await MedicalRecord.findByIdAndDelete(req.params.id);

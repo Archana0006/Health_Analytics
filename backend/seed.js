@@ -88,6 +88,7 @@ const seedData = async () => {
         const soapRecord = new MedicalRecord({
             patientId: demoPatient._id,
             doctorId: doctor._id,
+            diagnosis: 'Hypertension',
             subjective: 'Patient reports persistent headache.',
             objective: 'BP 155/95. HR 88.',
             assessment: 'Stage 2 Hypertension symptoms.',

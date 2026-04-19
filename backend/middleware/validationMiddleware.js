@@ -15,9 +15,7 @@ const validate = (req, res, next) => {
 
 const mongoIdValidationRules = (paramName = 'id') => {
     return [
-        paramName === 'id'
-            ? param('id').isMongoId().withMessage('Invalid ID format')
-            : body(paramName).isMongoId().withMessage(`Invalid ${paramName} format`)
+        param(paramName).isMongoId().withMessage(`Invalid ${paramName} format`)
     ];
 };
 

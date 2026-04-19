@@ -2,6 +2,25 @@ const Appointment = require('../models/Appointment');
 const Notification = require('../models/Notification');
 const { resolvePatientId } = require('../utils/healthUtils');
 
+// Helper to auto-complete past appointments
+const checkAndUpdateStatus = (appointments) => {
+    const now = new Date();
+    appointments.forEach(appt => {
+        if (appt.status === 'pending' || appt.status === 'approved') {
+            const apptDate = new Date(appt.date);
+            if (appt.time) {
+                const [hours, minutes] = appt.time.split(':');
+                apptDate.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+            }
+            if (apptDate < now) {
+                appt.status = 'completed';
+                Appointment.updateOne({ _id: appt._id }, { status: 'completed' }).catch(err => console.error('Auto-complete error:', err));
+            }
+        }
+    });
+    return appointments;
+};
+
 // @desc    Create an appointment
 // @route   POST /api/appointments
 // @access  Private
@@ -67,10 +86,12 @@ const getPatientAppointments = async (req, res, next) => {
             }
         }
 
-        const appointments = await Appointment.find({ patientId: searchId })
+        let appointments = await Appointment.find({ patientId: searchId })
             .populate('doctorId', 'name email address')
             .sort({ date: -1 })
             .lean();
+            
+        appointments = checkAndUpdateStatus(appointments);
         res.json(appointments);
     } catch (error) {
         next(error);
@@ -82,10 +103,12 @@ const getPatientAppointments = async (req, res, next) => {
 // @access  Private
 const getDoctorAppointments = async (req, res, next) => {
     try {
-        const appointments = await Appointment.find({ doctorId: req.params.id })
+        let appointments = await Appointment.find({ doctorId: req.params.id })
             .populate('patientId', 'name email age gender')
             .sort({ date: -1 })
             .lean();
+            
+        appointments = checkAndUpdateStatus(appointments);
         res.json(appointments);
     } catch (error) {
         next(error);
@@ -150,13 +173,14 @@ const getUpcomingAppointments = async (req, res, next) => {
             filter.doctorId = req.user.role === 'doctor' ? req.user.id : userId; // Doctor can only see theirs, admin can see others if requested
         }
 
-        const appointments = await Appointment.find(filter)
+        let appointments = await Appointment.find(filter)
             .populate('doctorId', 'name email')
             .populate('patientId', 'name email')
             .sort({ date: 1 })
             .limit(3)
             .lean();
 
+        appointments = checkAndUpdateStatus(appointments);
         res.json(appointments);
     } catch (error) {
         next(error);

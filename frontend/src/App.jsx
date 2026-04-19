@@ -27,6 +27,8 @@ const LabDashboard = lazy(() => import('./pages/LabDashboard'));
 const Timeline = lazy(() => import('./pages/Timeline'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const UsersManagement = lazy(() => import('./pages/UsersManagement'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 const PageTransition = ({ children }) => (
   <motion.div
@@ -82,6 +84,8 @@ function AppContent() {
                 {/* Public Routes */}
                 <Route path="/login" element={token ? <Navigate to="/" replace /> : <PageTransition><Login /></PageTransition>} />
                 <Route path="/register" element={token ? <Navigate to="/" replace /> : <PageTransition><Register /></PageTransition>} />
+                <Route path="/forgot-password" element={token ? <Navigate to="/" replace /> : <PageTransition><ForgotPassword /></PageTransition>} />
+                <Route path="/reset-password/:token" element={token ? <Navigate to="/" replace /> : <PageTransition><ResetPassword /></PageTransition>} />
 
                 {/* Protected Routes */}
                 <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><PageTransition><AdminDashboard /></PageTransition></ProtectedRoute>} />

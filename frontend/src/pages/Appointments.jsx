@@ -115,10 +115,9 @@ const Appointments = () => {
                     <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>{d}</span>
                     <div style={{ marginTop: '0.25rem', display: 'flex', flexWrap: 'wrap', gap: '2px' }}>
                         {dayAppts.map(a => (
-                            <div key={a._id} title={`${a.time}: ${a.reason}`} style={{ 
-                                width: '6px', height: '6px', borderRadius: '50%', 
-                                background: a.status === 'approved' ? 'var(--success)' : a.status === 'pending' ? 'var(--warning)' : 'var(--text-dim)' 
-                            }} />
+                            <div key={a._id} title={`${a.time}: ${a.reason}`} style={{ display: 'inline-flex', padding: '2px' }}>
+                                <CheckCircle size={22} color="var(--success)" />
+                            </div>
                         ))}
                     </div>
                 </div>

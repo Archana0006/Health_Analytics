@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Activity, Calendar, Clock, ClipboardList, CheckCircle, AlertCircle, Pill, FlaskConical, Filter, Download } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/apiClient';
 // Note: We'll assume a hook useMedicalTimeline exists or we use recent records
 import { usePatientRecords, useAppointments, usePatientLabs, usePatientPrescriptions } from '../hooks/useHealthData';
 
@@ -10,10 +11,40 @@ const Timeline = () => {
     const { patientId } = useParams();
     const effectiveId = patientId || user?.id;
 
-    const { data: records = [], isLoading: loadingRecords } = usePatientRecords(effectiveId);
-    const { data: appointments = [], isLoading: loadingAppts } = useAppointments(user?.role, user?.id, effectiveId);
-    const { data: labs = [], isLoading: loadingLabs } = usePatientLabs(effectiveId);
-    const { data: prescriptions = [], isLoading: loadingPrescriptions } = usePatientPrescriptions(effectiveId);
+    const [exportLoading, setExportLoading] = useState(false);
+
+    const handleExport = async () => {
+        if (!effectiveId) return;
+        setExportLoading(true);
+        try {
+            const response = await apiClient.get(`/records/report/${effectiveId}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'HealthTimeline_Report.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Could not export the timeline.');
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
+
+    // Identify the user's role to prevent mapping Doctor IDs to Patient API endpoints
+    const isPatientView = user?.role === 'patient' || !!patientId;
+    const fetchPatientId = user?.role === 'patient' ? user.id : patientId;
+
+    const { data: records = [], isLoading: loadingRecords } = usePatientRecords(fetchPatientId);
+    const { data: appointments = [], isLoading: loadingAppts } = useAppointments(user?.role, user?.id, patientId);
+    const { data: labs = [], isLoading: loadingLabs } = usePatientLabs(fetchPatientId);
+    const { data: prescriptions = [], isLoading: loadingPrescriptions } = usePatientPrescriptions(fetchPatientId);
 
     const isLoading = loadingRecords || loadingAppts || loadingLabs || loadingPrescriptions;
 
@@ -71,7 +102,9 @@ const Timeline = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button className="btn" style={{ padding: '0.6rem 1rem' }}><Filter size={18} /> Filter</button>
-                    <button className="btn btn-primary" style={{ padding: '0.6rem 1rem' }}><Download size={18} /> Export</button>
+                    <button onClick={handleExport} disabled={exportLoading} className="btn btn-primary" style={{ padding: '0.6rem 1rem' }}>
+                        <Download size={18} /> {exportLoading ? 'Exporting...' : 'Export'}
+                    </button>
                 </div>
             </header>
 

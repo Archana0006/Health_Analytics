@@ -18,7 +18,9 @@ const userSchema = new mongoose.Schema({
     address: String,
     createdAt: { type: Date, default: Date.now },
     failedAttempts: { type: Number, default: 0 },
-    lockUntil: { type: Date, default: null }
+    lockUntil: { type: Date, default: null },
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpire: { type: Date, default: null }
 });
 
 userSchema.pre('save', async function () {
